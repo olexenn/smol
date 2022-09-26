@@ -358,7 +358,6 @@ const Stylophone = () => {
         onMouseUp={handleMouseUp}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
-        onContextMenu={(e) => e.preventDefault()}
       >
         {!isLandscape ? (
           <div className="no-landscape">
@@ -430,7 +429,10 @@ const Stylophone = () => {
                   ></canvas>
                 </div>
               </div>
-              <div className="keyboard">
+              <div
+                className="keyboard"
+                onContextMenu={(e) => e.preventDefault()}
+              >
                 <ul
                   className="keys"
                   onMouseLeave={handleMouseLeave}
