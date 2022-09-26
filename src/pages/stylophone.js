@@ -325,6 +325,7 @@ const Stylophone = () => {
 
   const handleTouchEnd = (e) => {
     lastTouched = null;
+    audioContext.resume();
     handleMouseUp();
   };
 
