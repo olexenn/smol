@@ -108,13 +108,30 @@ const Stylophone = () => {
   const [notes, setNotes] = useState(initialNotes);
   const [activeButton, setActiveButton] = useState(2);
   const [isVibrato, setVibrato] = useState(false);
+  const [isLandscape, setLandscape] = useState(false);
 
   useEffect(() => {
+    if (window.innerHeight < window.innerWidth) setLandscape(true);
+    else setLandscape(false);
+    window.addEventListener("resize", detect, false);
+
+    return () => window.removeEventListener("resize", detect, false);
+  }, []);
+
+  const detect = () => {
+    if (window.innerHeight < window.innerWidth) setLandscape(true);
+    else setLandscape(false);
+  };
+
+  useEffect(() => {
+    if (!isLandscape) return;
+
     audioContext = new AudioContext();
     analyzer = audioContext.createAnalyser();
     analyzer.fftSize = 2048;
 
     containerRef.current.focus();
+
     const ctx = canvasRef.current.getContext("2d");
 
     let animationFrame;
@@ -151,9 +168,11 @@ const Stylophone = () => {
       cancelAnimationFrame(animationFrame);
       if (currentOscillator) currentOscillator.disconnect();
       analyzer.disconnect();
+      window.removeEventListener("resize", detect, false);
     };
-  }, [notes, isVibrato]);
+  }, [notes, isVibrato, isLandscape]);
 
+  // sound section
   const vibrato = (frequency) => {
     const oscillator = audioContext.createOscillator();
     oscillator.frequency.value = 7; // 7hz as in original oscillator
@@ -193,6 +212,8 @@ const Stylophone = () => {
     }
   };
 
+  // controls
+
   const handleNote = (mode) => {
     let noteCursor = `A${mode}`;
     let index = Frequencies.findIndex((f) => f.note === noteCursor);
@@ -205,6 +226,11 @@ const Stylophone = () => {
     setNotes(newNotes);
   };
 
+  const toggleVibrato = () => {
+    setVibrato(!isVibrato);
+  };
+
+  // mouse events
   let isClicking = false;
 
   const handleMouseDown = (e, note) => {
@@ -230,10 +256,7 @@ const Stylophone = () => {
     return;
   };
 
-  const toggleVibrato = () => {
-    setVibrato(!isVibrato);
-  };
-
+  // keyboard events
   const pressedKeys = [];
   const handleKeyDown = (e) => {
     e.preventDefault();
@@ -285,16 +308,41 @@ const Stylophone = () => {
     if (pressedKeys.length === 0) stopNote();
   };
 
+  // touch events
+  let lastTouched = null;
+
+  const handleTouchStart = (e, note) => {
+    lastTouched = e.touches[0]?.target || null;
+
+    handleMouseDown(e, note);
+  };
+
+  const handleTouchEnd = (e) => {
+    lastTouched = null;
+    handleMouseUp();
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+
+    if (!touch) return;
+
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    if (!target || target === lastTouched || !target.classList.contains("key"))
+      return;
+
+    const noteId = target.id.replace("key-", "");
+    const note = notes.find((n) => n.id === Number(noteId));
+
+    lastTouched = target;
+
+    handleMouseOver(e, note.name);
+  };
   return (
     <>
       <Head>
         <title>Stylophone</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap"
-          rel="stylesheet"
-        ></link>
       </Head>
 
       <div
@@ -303,107 +351,128 @@ const Stylophone = () => {
         onMouseUp={handleMouseUp}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
+        onContextMenu={(e) => e.preventDefault()}
       >
-        <div className="stylophone">
-          <div>
-            <div>
-              <div className="controls">
-                <div>
-                  <h1 className="title">Stylophone</h1>
-                  <button
-                    className={
-                      activeButton === 1
-                        ? "stylo-btn stylo-btn-active"
-                        : "stylo-btn"
-                    }
-                    onClick={() => handleNote(1)}
-                  >
-                    1
-                  </button>
-                  <button
-                    className={
-                      activeButton === 2
-                        ? "stylo-btn stylo-btn-active"
-                        : "stylo-btn"
-                    }
-                    onClick={() => handleNote(2)}
-                  >
-                    2
-                  </button>
-                  <button
-                    className={
-                      activeButton === 3
-                        ? "stylo-btn stylo-btn-active"
-                        : "stylo-btn"
-                    }
-                    onClick={() => handleNote(3)}
-                  >
-                    3
-                  </button>
-                  <button
-                    className={
-                      isVibrato ? "stylo-btn stylo-btn-active" : "stylo-btn"
-                    }
-                    onClick={toggleVibrato}
-                  >
-                    <svg viewBox="0 0 24 24" className="vibrato-icon">
-                      <path
-                        fill="currentColor"
-                        d="M20,12H22V14H20C18.62,14 17.26,13.65 16,13C13.5,14.3 10.5,14.3 8,13C6.74,13.65 5.37,14 4,14H2V12H4C5.39,12 6.78,11.53 8,10.67C10.44,12.38 13.56,12.38 16,10.67C17.22,11.53 18.61,12 20,12M20,6H22V8H20C18.62,8 17.26,7.65 16,7C13.5,8.3 10.5,8.3 8,7C6.74,7.65 5.37,8 4,8H2V6H4C5.39,6 6.78,5.53 8,4.67C10.44,6.38 13.56,6.38 16,4.67C17.22,5.53 18.61,6 20,6M20,18H22V20H20C18.62,20 17.26,19.65 16,19C13.5,20.3 10.5,20.3 8,19C6.74,19.65 5.37,20 4,20H2V18H4C5.39,18 6.78,17.53 8,16.67C10.44,18.38 13.56,18.38 16,16.67C17.22,17.53 18.61,18 20,18Z"
-                      ></path>
-                    </svg>
-                  </button>
-                </div>
-                <canvas
-                  ref={canvasRef}
-                  width="657"
-                  className="stylo-canvas"
-                ></canvas>
-              </div>
-            </div>
-            <div className="keyboard">
-              <ul className="keys" onMouseLeave={handleMouseLeave}>
-                {notes.map((note) => {
-                  const key = keyMaps.find((k) => k.id === note.id);
-                  let hint = "";
-
-                  switch (key.key) {
-                    case "Semicolon":
-                      hint = ";";
-                      break;
-                    case "BracketLeft":
-                      hint = "[";
-                      break;
-                    case "Quote":
-                      hint = "'";
-                      break;
-                    case "BracketRight":
-                      hint = "]";
-                      break;
-                    case "Backslash":
-                      hint = "\\";
-                      break;
-                    default:
-                      hint = key.key.replace("Key", "");
-                  }
-
-                  return (
-                    <li
-                      className={isInt(note.id) ? "key" : "key black"}
-                      id={`key-${note.id}`}
-                      key={note.id}
-                      onMouseDown={(e) => handleMouseDown(e, note.name)}
-                      onMouseOver={(e) => handleMouseOver(e, note.name)}
-                    >
-                      <span>{note.name}</span>
-                      <span>{hint}</span>
-                    </li>
-                  );
-                })}
-              </ul>
+        {!isLandscape ? (
+          <div className="no-landscape">
+            <h1>Stylophone</h1>
+            <div className="container-portrait">
+              <img
+                src="rotate.png"
+                alt="rotate phone"
+                className="rotate-image"
+              />
+              <h2>Rotate Your Phone To Use Stylophone</h2>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="stylophone">
+            <div>
+              <div>
+                <div className="controls">
+                  <div>
+                    <h1 className="title">Stylophone</h1>
+                    <button
+                      className={
+                        activeButton === 1
+                          ? "stylo-btn stylo-btn-active"
+                          : "stylo-btn"
+                      }
+                      onClick={() => handleNote(1)}
+                    >
+                      1
+                    </button>
+                    <button
+                      className={
+                        activeButton === 2
+                          ? "stylo-btn stylo-btn-active"
+                          : "stylo-btn"
+                      }
+                      onClick={() => handleNote(2)}
+                    >
+                      2
+                    </button>
+                    <button
+                      className={
+                        activeButton === 3
+                          ? "stylo-btn stylo-btn-active"
+                          : "stylo-btn"
+                      }
+                      onClick={() => handleNote(3)}
+                    >
+                      3
+                    </button>
+                    <button
+                      className={
+                        isVibrato ? "stylo-btn stylo-btn-active" : "stylo-btn"
+                      }
+                      onClick={toggleVibrato}
+                    >
+                      <svg viewBox="0 0 24 24" className="vibrato-icon">
+                        <path
+                          fill="currentColor"
+                          d="M20,12H22V14H20C18.62,14 17.26,13.65 16,13C13.5,14.3 10.5,14.3 8,13C6.74,13.65 5.37,14 4,14H2V12H4C5.39,12 6.78,11.53 8,10.67C10.44,12.38 13.56,12.38 16,10.67C17.22,11.53 18.61,12 20,12M20,6H22V8H20C18.62,8 17.26,7.65 16,7C13.5,8.3 10.5,8.3 8,7C6.74,7.65 5.37,8 4,8H2V6H4C5.39,6 6.78,5.53 8,4.67C10.44,6.38 13.56,6.38 16,4.67C17.22,5.53 18.61,6 20,6M20,18H22V20H20C18.62,20 17.26,19.65 16,19C13.5,20.3 10.5,20.3 8,19C6.74,19.65 5.37,20 4,20H2V18H4C5.39,18 6.78,17.53 8,16.67C10.44,18.38 13.56,18.38 16,16.67C17.22,17.53 18.61,18 20,18Z"
+                        ></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <canvas
+                    ref={canvasRef}
+                    width="657"
+                    className="stylo-canvas"
+                  ></canvas>
+                </div>
+              </div>
+              <div className="keyboard">
+                <ul
+                  className="keys"
+                  onMouseLeave={handleMouseLeave}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {notes.map((note) => {
+                    const key = keyMaps.find((k) => k.id === note.id);
+                    let hint = "";
+
+                    switch (key.key) {
+                      case "Semicolon":
+                        hint = ";";
+                        break;
+                      case "BracketLeft":
+                        hint = "[";
+                        break;
+                      case "Quote":
+                        hint = "'";
+                        break;
+                      case "BracketRight":
+                        hint = "]";
+                        break;
+                      case "Backslash":
+                        hint = "\\";
+                        break;
+                      default:
+                        hint = key.key.replace("Key", "");
+                    }
+
+                    return (
+                      <li
+                        className={isInt(note.id) ? "key" : "key black"}
+                        id={`key-${note.id}`}
+                        key={note.id}
+                        onMouseDown={(e) => handleMouseDown(e, note.name)}
+                        onMouseOver={(e) => handleMouseOver(e, note.name)}
+                        onTouchStart={(e) => handleTouchStart(e, note.name)}
+                        onTouchMove={handleTouchMove}
+                      >
+                        <span>{note.name}</span>
+                        <span>{hint}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

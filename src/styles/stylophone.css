@@ -12,6 +12,26 @@ body {
 .link {
   display: block;
 }
+
+.no-landscape > * {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  bottom: 10px;
+  right: 10px;
+  overflow: auto;
+  text-align: center;
+}
+
+.rotate-image {
+  height: 40%;
+  width: 45%;
+}
+
+.container-portrait {
+  text-align: center;
+  top: 30%;
+}
 .stylophone {
   /* padding: 0 8px; */
   --c-bg: #f6ebcd;
@@ -29,6 +49,7 @@ body {
   min-height: 100vh;
   user-select: none;
   overflow: hidden;
+  touch-action: none;
 }
 
 .controls {
@@ -117,6 +138,46 @@ body {
   position: relative;
 }
 
+@media screen and (min-width: 600px) and (max-width: 700px) {
+  .stylo-canvas {
+    width: 54.5%;
+  }
+
+  .controls {
+    width: 98%;
+  }
+}
+
+@media screen and (min-width: 701px) and (max-width: 800px) {
+  .stylo-canvas {
+    width: 56%;
+  }
+
+  .controls {
+    width: 98%;
+  }
+}
+
+@media screen and (min-width: 801px) and (max-width: 900px) {
+  .stylo-canvas {
+    width: 62%;
+  }
+
+  .controls {
+    width: 98%;
+  }
+}
+
+@media screen and (min-width: 901px) and (max-width: 1000px) {
+  .stylo-canvas {
+    width: 66%;
+  }
+
+  .controls {
+    width: 98%;
+  }
+}
+
 .keys {
   display: grid;
   list-style: none;
@@ -128,12 +189,22 @@ body {
   padding: var(--border-width);
   width: calc(100vw - 2 * var(--border-width) - 16px);
   height: calc((80px - 2 * var(--border-width)) * 2 + var(--border-width) * 3);
+  -webkit-user-select: none; 
+          -webkit-touch-callout: none; 
+          -moz-user-select: none; 
+          -ms-user-select: none; 
+          user-select: none;
 }
 
 @media (min-width: 1000px) {
   .keys {
     width: calc((80px - 2 * var(--border-width)) * 12 + var(--border-width) * 23);
     height: calc((80px - 2 * var(--border-width)) * 2 + var(--border-width) * 3);
+    -webkit-user-select: none; 
+          -webkit-touch-callout: none; 
+          -moz-user-select: none; 
+          -ms-user-select: none; 
+          user-select: none;
   }
 }
 
@@ -146,7 +217,12 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;  
-  align-items: center; 
+  align-items: center;
+  -webkit-user-select: none; 
+          -webkit-touch-callout: none; 
+          -moz-user-select: none; 
+          -ms-user-select: none; 
+          user-select: none;
 }
 
 .stylo-btn-active {
