@@ -126,7 +126,13 @@ const Stylophone = () => {
   useEffect(() => {
     if (!isLandscape) return;
 
-    audioContext = new AudioContext();
+    // Thanks Apple for a different support for iOS audio
+    if (typeof AudioContext !== "undefined") {
+      audioContext = new AudioContext();
+    } else if (typeof window.webkitAudioContext !== "undefined") {
+      audioContext = new window.webkitAudioContext();
+    }
+
     analyzer = audioContext.createAnalyser();
     analyzer.fftSize = 2048;
 
