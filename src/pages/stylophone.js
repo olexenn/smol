@@ -226,7 +226,6 @@ const Stylophone = () => {
   };
 
   const handleMouseLeave = () => {
-    isClicking = false;
     stopNote();
     return;
   };
