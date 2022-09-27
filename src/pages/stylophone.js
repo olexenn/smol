@@ -318,12 +318,17 @@ const Stylophone = () => {
   let lastTouched = null;
 
   const handleTouchStart = (e, note) => {
+    if (lastTouched) stopNote();
+
     lastTouched = e.touches[0]?.target || null;
 
-    handleMouseDown(e, note);
+    if (lastTouched) {
+      handleMouseDown(e, note);
+    }
   };
 
   const handleTouchEnd = (e) => {
+    console.log(e);
     lastTouched = null;
     audioContext.resume();
     handleMouseUp();
